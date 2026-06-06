@@ -1,13 +1,13 @@
 {
-  "originHash" : "e8a1a73c69cc8fd66dc9b79f4a1653228655b48d3f9cfeafdd4bb1038c1abfef",
+  "originHash" : "36a41dec7c6117dbd44f753985a6cb5f1ad375c876be4b173665e96f3e6bda10",
   "pins" : [
     {
       "identity" : "swift-asn1",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-asn1.git",
       "state" : {
-        "revision" : "9f542610331815e29cc3821d3b6f488db8715517",
-        "version" : "1.6.0"
+        "revision" : "eb50cbd14606a9161cbc5d452f18797c90ef0bab",
+        "version" : "1.7.0"
       }
     },
     {
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-crypto.git",
       "state" : {
-        "revision" : "95ba0316a9b733e92bb6b071255ff46263bbe7dc",
-        "version" : "3.15.1"
+        "revision" : "1b6b2e274e85105bfa155183145a1dcfd63331f1",
+        "version" : "4.5.0"
       }
     },
     {
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Kingpin-Apps/swift-rdf-canonize.git",
       "state" : {
-        "revision" : "1461a24738cededbf94ce69f57eeff8e27ba0efe",
-        "version" : "0.2.0"
+        "revision" : "8c0c4cca908e323f88a2b91bcd985144101c6a80",
+        "version" : "0.2.2"
       }
     }
   ],

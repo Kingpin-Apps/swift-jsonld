@@ -776,18 +776,29 @@ extension JSONLD {
                 // the term is never used (so the activation path
                 // never fires). Run a discardable processContext on
                 // a snapshot active context; any error rewraps.
-                do {
-                    let validateCtx = activeContext
-                    _ = try await processContext(
-                        activeContext: validateCtx,
-                        localContext: ctxValue,
-                        baseURL: nil,
-                        overrideProtected: true,
-                        options: options
-                    )
-                } catch {
-                    throw .other(code: "invalid scoped context",
-                                 message: "scoped @context on term \(term) is invalid: \(error)")
+                //
+                // Skip validation when the scoped @context contains a
+                // string reference — that requires loading via the
+                // document loader, and we don't have access to the
+                // outer call's `remoteContexts` chain here. A self-
+                // referencing scoped context (te126/127/128) would
+                // recurse without bound. The runtime activation path
+                // carries `remoteContexts` and detects cycles
+                // correctly.
+                if !scopedContextHasStringRef(ctxValue) {
+                    do {
+                        let validateCtx = activeContext
+                        _ = try await processContext(
+                            activeContext: validateCtx,
+                            localContext: ctxValue,
+                            baseURL: nil,
+                            overrideProtected: true,
+                            options: options
+                        )
+                    } catch {
+                        throw .other(code: "invalid scoped context",
+                                     message: "scoped @context on term \(term) is invalid: \(error)")
+                    }
                 }
                 def.localContext = ctxValue
             }
@@ -1099,6 +1110,19 @@ extension JSONLD {
     /// True when `s` carries IRI-reserved characters Foundation would
     /// silently percent-encode (closes tli12: `@base: "http://invalid/<>/"`
     /// shouldn't slip past the WF filter after URL parsing).
+    /// True if a scoped `@context` value contains (directly or in an
+    /// array) a string-shaped reference that would require loading
+    /// via the document loader. Used to skip definition-time
+    /// validation that would otherwise infinite-recurse on self-
+    /// referencing scoped contexts (te126/127/128).
+    private static func scopedContextHasStringRef(_ value: JSON) -> Bool {
+        switch value {
+        case .string: return true
+        case .array(let items): return items.contains(where: scopedContextHasStringRef)
+        default: return false
+        }
+    }
+
     private static func containsInvalidIRIChars(_ s: String) -> Bool {
         for scalar in s.unicodeScalars {
             if scalar.value < 0x20 { return true }
