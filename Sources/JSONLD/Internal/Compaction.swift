@@ -370,7 +370,7 @@ extension JSONLD {
                                         defined: &defs,
                                         options: options
                                     )) ?? indexProp
-                                    let indexIRIResolved = indexIRI ?? indexProp
+                                    let indexIRIResolved = indexIRI
                                     let indexTermDef = ctx.termDefinitions[indexProp]
                                     let indexTypeIRIInterprets =
                                         indexTermDef?.typeMapping == "@id"
@@ -627,7 +627,7 @@ extension JSONLD {
                             defined: &defs,
                             options: options
                         )) ?? indexProp
-                        let indexIRIResolved = indexIRI ?? indexProp
+                        let indexIRIResolved = indexIRI
 
                         let rawValues: [JSON]
                         if let bucket = m[indexIRIResolved] {

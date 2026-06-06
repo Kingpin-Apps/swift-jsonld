@@ -1,4 +1,12 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
+// URLSession is unavailable on platforms without a network stack
+// (notably wasm/WASI). On those targets the loader and its helper
+// are compiled out; users supply their own ``JSONLDDocumentLoader``.
+#if canImport(Darwin) || canImport(FoundationNetworking)
 
 /// Default `JSONLDDocumentLoader` backed by URLSession.
 ///
@@ -103,7 +111,7 @@ private enum JSONFixtureForLoader {
     static func toJSON(_ any: Any) throws -> JSONLD.JSON {
         if any is NSNull { return .null }
         if let n = any as? NSNumber {
-            if CFGetTypeID(n) == CFBooleanGetTypeID() { return .bool(n.boolValue) }
+            if String(cString: n.objCType) == "c" { return .bool(n.boolValue) }
             let d = n.doubleValue
             if d.truncatingRemainder(dividingBy: 1) == 0,
                d >= Double(Int64.min), d <= Double(Int64.max)
@@ -121,3 +129,5 @@ private enum JSONFixtureForLoader {
         throw UnsupportedType(kind: String(describing: type(of: any)))
     }
 }
+
+#endif // canImport(Darwin) || canImport(FoundationNetworking)

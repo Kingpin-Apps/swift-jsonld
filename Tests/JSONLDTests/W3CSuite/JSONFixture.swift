@@ -18,9 +18,11 @@ enum JSONFixture {
     static func toJSON(_ any: Any) throws -> JSONLD.JSON {
         if any is NSNull { return .null }
         if let n = any as? NSNumber {
-            // CFBoolean → Bool. Otherwise treat as number; if it's
-            // integral, use .int, otherwise .double.
-            if CFGetTypeID(n) == CFBooleanGetTypeID() { return .bool(n.boolValue) }
+            // Boolean-typed NSNumber → Bool. Otherwise treat as
+            // number; if it's integral, use .int, otherwise .double.
+            // `objCType == "c"` is the cross-platform check
+            // (CFGetTypeID is macOS-only).
+            if String(cString: n.objCType) == "c" { return .bool(n.boolValue) }
             let d = n.doubleValue
             if d.truncatingRemainder(dividingBy: 1) == 0,
                d >= Double(Int64.min), d <= Double(Int64.max)

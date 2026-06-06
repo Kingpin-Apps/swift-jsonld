@@ -603,7 +603,7 @@ private enum JSONFixtureBridge {
     static func toJSON(_ any: Any) throws -> JSONLD.JSON {
         if any is NSNull { return .null }
         if let n = any as? NSNumber {
-            if CFGetTypeID(n) == CFBooleanGetTypeID() { return .bool(n.boolValue) }
+            if String(cString: n.objCType) == "c" { return .bool(n.boolValue) }
             let d = n.doubleValue
             if d.truncatingRemainder(dividingBy: 1) == 0,
                d >= Double(Int64.min), d <= Double(Int64.max)

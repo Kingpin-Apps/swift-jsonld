@@ -777,7 +777,7 @@ extension JSONLD {
                 // never fires). Run a discardable processContext on
                 // a snapshot active context; any error rewraps.
                 do {
-                    var validateCtx = activeContext
+                    let validateCtx = activeContext
                     _ = try await processContext(
                         activeContext: validateCtx,
                         localContext: ctxValue,
