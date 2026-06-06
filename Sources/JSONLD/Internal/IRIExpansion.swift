@@ -185,6 +185,19 @@ extension JSONLD {
             // ref starts with "#"
             return basePath + ref
         }
+        // Opaque-scheme bases (`tag:example`, `ex:`, `urn:foo` — no `//`
+        // authority after the scheme) need manual RFC 3986 §5.3
+        // resolution. Foundation's `URL(string:relativeTo:)` synthesizes
+        // a spurious empty authority on some platforms/Xcode versions —
+        // base `tag:example` + ref `a` produces `tag:///a` instead of
+        // `tag:a` (t0130/t0131/t0132/tli11). Detect the opaque shape and
+        // do the merge ourselves.
+        let baseStr = base.absoluteString
+        if let colon = baseStr.firstIndex(of: ":"),
+           !baseStr[baseStr.index(after: colon)...].hasPrefix("//")
+        {
+            return resolveOpaqueBase(ref, base: baseStr, colon: colon)
+        }
         guard let resolved = URL(string: ref, relativeTo: base) else { return ref }
         var s = resolved.absoluteString
 
@@ -217,6 +230,73 @@ extension JSONLD {
             }
         }
         return s
+    }
+
+    /// RFC 3986 §5.2/§5.3 resolution for an opaque-scheme base — one
+    /// with no `//` authority component. Strict path-merge + dot-segment
+    /// removal, no Foundation involvement.
+    ///
+    /// Examples:
+    /// - base `tag:example`, ref `a` → `tag:a`
+    /// - base `tag:example/foo`, ref `a` → `tag:example/a`
+    /// - base `tag:example/foo/`, ref `a` → `tag:example/foo/a`
+    /// - base `ex:`, ref `test` → `ex:test`
+    private static func resolveOpaqueBase(_ ref: String, base: String, colon: String.Index) -> String {
+        let scheme = String(base[..<colon])
+        var basePath = String(base[base.index(after: colon)...])
+        // Strip the base's fragment / query before merging.
+        if let hashIdx = basePath.firstIndex(of: "#") {
+            basePath = String(basePath[..<hashIdx])
+        }
+        var baseQuery: String? = nil
+        if let qIdx = basePath.firstIndex(of: "?") {
+            baseQuery = String(basePath[basePath.index(after: qIdx)...])
+            basePath = String(basePath[..<qIdx])
+        }
+
+        // Split ref into path / query / fragment.
+        var refPath = ref
+        var refFragment: String? = nil
+        var refQuery: String? = nil
+        if let hashIdx = refPath.firstIndex(of: "#") {
+            refFragment = String(refPath[refPath.index(after: hashIdx)...])
+            refPath = String(refPath[..<hashIdx])
+        }
+        if let qIdx = refPath.firstIndex(of: "?") {
+            refQuery = String(refPath[refPath.index(after: qIdx)...])
+            refPath = String(refPath[..<qIdx])
+        }
+
+        let resultPath: String
+        let resultQuery: String?
+        if refPath.isEmpty {
+            // §5.2.2: empty path means "same resource, possibly with
+            // a different query/fragment".
+            resultPath = basePath
+            resultQuery = refQuery ?? baseQuery
+        } else if refPath.hasPrefix("/") {
+            // Path is already absolute under the scheme — just normalize.
+            resultPath = removeDotSegments(refPath)
+            resultQuery = refQuery
+        } else {
+            // Relative — merge against the base path by replacing its
+            // last segment.
+            let merged: String
+            if let lastSlash = basePath.lastIndex(of: "/") {
+                merged = String(basePath[...lastSlash]) + refPath
+            } else {
+                // Base path has no slash — relative ref replaces it
+                // entirely (RFC 3986 §5.2.3 with no authority).
+                merged = refPath
+            }
+            resultPath = removeDotSegments(merged)
+            resultQuery = refQuery
+        }
+
+        var out = "\(scheme):\(resultPath)"
+        if let q = resultQuery { out += "?\(q)" }
+        if let f = refFragment { out += "#\(f)" }
+        return out
     }
 
     /// Compute the relative form of `iri` against `base` — the inverse
