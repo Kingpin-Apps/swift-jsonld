@@ -1,3 +1,9 @@
+## 0.1.3 (2026-06-06)
+
+### Fix
+
+- fix Foundation's URL(string:relativeTo:) resolution for opaque-scheme bases
+
 ## 0.1.2 (2026-06-06)
 
 ### Fix
