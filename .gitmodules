@@ -1,0 +1,6 @@
+[submodule "Tests/JSONLDTests/json-ld-api"]
+	path = Tests/JSONLDTests/json-ld-api
+	url = https://github.com/w3c/json-ld-api
+[submodule "Tests/JSONLDTests/json-ld-framing"]
+	path = Tests/JSONLDTests/json-ld-framing
+	url = https://github.com/w3c/json-ld-framing
