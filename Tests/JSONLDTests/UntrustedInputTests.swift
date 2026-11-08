@@ -33,6 +33,27 @@ struct UntrustedInputTests {
         _ = try await JSONLD.canonize(mapped, options: options)
     }
 
+    @Test("Safe mode rejects terms that RDF conversion would drop")
+    func safeModeIllFormedTerms() async throws {
+        var options = JSONLD.Options()
+        options.safeMode = true
+        let space: JSONLD.JSON = ["@context": ["p": "https://example.com/v#x y"], "p": "hidden"]
+        let blankPredicate: JSONLD.JSON = ["@context": ["p": "_:hidden"], "p": "hidden"]
+        let badLanguage: JSONLD.JSON = [
+            "@context": Self.vocab,
+            "t": ["@value": "hidden", "@language": "x y"],
+        ]
+        for doc in [space, blankPredicate, badLanguage] {
+            _ = try await JSONLD.canonize(doc)
+            await #expect(throws: JSONLD.Error.self) { _ = try await JSONLD.canonize(doc, options: options) }
+        }
+        let wellFormed: JSONLD.JSON = ["@context": Self.vocab, "t": ["@value": "kept", "@language": "en"]]
+        _ = try await JSONLD.canonize(wellFormed, options: options)
+        // An unmapped @type term (as in the CIP-100 example) still passes.
+        let relativeType: JSONLD.JSON = ["@context": ["a": "https://example.com/a"], "@type": "Other", "a": "x"]
+        _ = try await JSONLD.canonize(relativeType, options: options)
+    }
+
     @Test("A finite work factor stops a poison document quickly")
     func workFactor() async throws {
         let leaf: JSONLD.JSON = ["q": "x"]

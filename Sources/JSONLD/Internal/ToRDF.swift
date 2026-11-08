@@ -13,15 +13,29 @@ extension JSONLD {
     /// produce named graphs but with limited per-graph blank-node
     /// scoping. Lists generate the standard `rdf:first`/`rdf:rest`/
     /// `rdf:nil` chain.
-    static func toRDF(expanded: JSON) -> Dataset {
+    ///
+    /// With `safeMode`, any content the algorithm would silently drop
+    /// (a quad with an ill-formed IRI, language tag or datatype, or a
+    /// `{"@id": null}` node reference) throws instead, so the dataset
+    /// always covers everything the input says.
+    static func toRDF(expanded: JSON, safeMode: Bool = false) throws(JSONLD.Error) -> Dataset {
         var emitter = QuadEmitter()
         emitter.walkTopLevel(expanded)
+        if safeMode, let dropped = emitter.firstDropped {
+            throw .other(
+                code: "invalid term",
+                message: "Safe mode: \(dropped) would be dropped from the RDF output"
+            )
+        }
         return emitter.dataset
     }
 }
 
 private struct QuadEmitter {
     var dataset = JSONLD.Dataset()
+    /// What the first silently dropped piece of content was, if any.
+    /// Safe mode turns this into an error.
+    var firstDropped: String?
     private var bnCounter = 0
     /// Rename map for explicit `_:` labels from the input. Each
     /// distinct input label gets its own fresh `_:b<n>` so an input
@@ -151,6 +165,7 @@ private struct QuadEmitter {
                     // survives expansion to keep the property visible, but
                     // it represents no RDF identity, so no triple emits.
                     if inner.count == 1, case .some(.null) = inner["@id"] {
+                        if firstDropped == nil { firstDropped = "a null node reference for \(key)" }
                         continue
                     }
                     if inner["@list"] != nil {
@@ -290,7 +305,22 @@ private struct QuadEmitter {
               isWellFormed(term: predicate),
               isWellFormed(term: object),
               graph.map(isWellFormed(term:)) ?? true
-        else { return }
+        else {
+            // A relative `@type` (a type term the context does not map, such
+            // as "Other" in the CIP-100 example) is dropped by every
+            // processor and is not a property value, so safe mode lets it
+            // pass, as jsonld.js does. Everything else is recorded.
+            let relativeType: Bool
+            if case .iri(Self.rdfType) = predicate, case .iri(let type) = object, !type.contains(":") {
+                relativeType = true
+            } else {
+                relativeType = false
+            }
+            if !relativeType, firstDropped == nil {
+                firstDropped = "an ill-formed term for predicate \(predicate)"
+            }
+            return
+        }
 
         let quad = JSONLD.Quad(subject: subject, predicate: predicate, object: object, graph: graph)
         if let graph {

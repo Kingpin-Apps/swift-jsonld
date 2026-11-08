@@ -20,7 +20,7 @@ extension JSONLD {
             try checkNestingDepth(input, limit: limit)
         }
         let expanded = try await expand(input, options: options)
-        return toRDF(expanded: expanded)
+        return try toRDF(expanded: expanded, safeMode: options.safeMode)
     }
 
     /// Throws when `input` nests arrays or objects deeper than `limit`.

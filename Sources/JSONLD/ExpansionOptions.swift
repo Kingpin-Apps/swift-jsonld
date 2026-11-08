@@ -32,9 +32,11 @@ extension JSONLD {
 
         /// If true, expansion throws when it would silently drop an
         /// object key whose term does not expand to a keyword or an
-        /// absolute IRI (an unmapped term, or a term mapped to `null`).
-        /// Use it before hashing or signing a document, so that every
-        /// key a reader sees is covered by the canonical form.
+        /// absolute IRI (an unmapped term, or a term mapped to `null`),
+        /// and RDF conversion throws when it would drop a quad with an
+        /// ill-formed IRI, language tag or datatype. Use it before
+        /// hashing or signing a document, so that every key a reader
+        /// sees is covered by the canonical form.
         public var safeMode: Bool = false
 
         /// Work factor passed to RDFC-1.0 canonicalization in
