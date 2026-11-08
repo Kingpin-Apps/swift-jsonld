@@ -19,7 +19,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/Kingpin-Apps/swift-rdf-canonize.git", from: "0.2.2")
+        .package(url: "https://github.com/Kingpin-Apps/swift-rdf-canonize.git", from: "0.2.3")
     ],
     targets: [
         .target(

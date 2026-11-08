@@ -1,5 +1,5 @@
 {
-  "originHash" : "36a41dec7c6117dbd44f753985a6cb5f1ad375c876be4b173665e96f3e6bda10",
+  "originHash" : "daa91efb87025d16be52e7054d45662c069677fb5c732447c67b11d1738cb348",
   "pins" : [
     {
       "identity" : "swift-asn1",
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Kingpin-Apps/swift-rdf-canonize.git",
       "state" : {
-        "revision" : "8c0c4cca908e323f88a2b91bcd985144101c6a80",
-        "version" : "0.2.2"
+        "revision" : "9b25ad1a2449b9df243cff8908d164aa5f07a867",
+        "version" : "0.2.3"
       }
     }
   ],
