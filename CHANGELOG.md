@@ -1,3 +1,9 @@
+## 0.1.4 (2026-11-08)
+
+### Fix
+
+- add safe mode, a canonicalization work factor and a nesting limit, and map whole-number doubles to xsd:integer
+
 ## 0.1.3 (2026-06-06)
 
 ### Fix
