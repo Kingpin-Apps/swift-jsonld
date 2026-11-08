@@ -74,6 +74,14 @@ enum RDFTerm {
 }
 
 enum XSDNumber {
+    /// XSD canonical integer for a whole-number double below 10^21.
+    /// Values beyond Int64 are printed digit by digit rather than
+    /// converted, so the conversion cannot trap.
+    static func integerLexical(_ d: Double) -> String {
+        if let i = Int64(exactly: d) { return String(i) }
+        return String(format: "%.0f", d)
+    }
+
     /// XSD canonical double — [XSD §3.2.5 lexical mapping](https://www.w3.org/TR/xmlschema11-2/#double).
     ///
     /// The lexical form is `m E n` where `m` is a decimal in the range

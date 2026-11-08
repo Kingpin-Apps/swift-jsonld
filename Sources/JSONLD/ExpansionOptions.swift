@@ -30,10 +30,26 @@ extension JSONLD {
         /// `maxRemoteContextsExceeded`.
         public var maxRemoteContextsLoaded: Int = 50
 
-        /// If true (default in 1.1 + safe mode), expand reports
-        /// unrecognised keywords / suspect input as errors rather than
-        /// silently dropping them.
+        /// If true, expansion throws when it would silently drop an
+        /// object key whose term does not expand to a keyword or an
+        /// absolute IRI (an unmapped term, or a term mapped to `null`).
+        /// Use it before hashing or signing a document, so that every
+        /// key a reader sees is covered by the canonical form.
         public var safeMode: Bool = false
+
+        /// Work factor passed to RDFC-1.0 canonicalization in
+        /// ``JSONLD/canonize(_:options:)``. `Int.max` (the default) is
+        /// unbounded and suits trusted input. For untrusted input use a
+        /// small value (jsonld.js maps low/medium/high to 0/2/3); poison
+        /// graphs then fail fast with a `canonicalize-failed` error.
+        public var canonicalizationWorkFactor: Int = .max
+
+        /// Maximum nesting depth of arrays and objects accepted by
+        /// ``JSONLD/toRDF(_:options:)`` and ``JSONLD/canonize(_:options:)``.
+        /// `nil` (the default) applies no limit. RDF conversion recurses
+        /// once per nesting level, so untrusted input should set a bound
+        /// that fits the calling thread's stack.
+        public var maxNestingDepth: Int? = nil
 
         /// If true, produce arrays for keys whose container mapping is
         /// `@set`. Compaction option, threaded through expand options

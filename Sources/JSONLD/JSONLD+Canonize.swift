@@ -24,7 +24,10 @@ extension JSONLD {
         let dataset = try await toRDF(input, options: options)
         let bridged = bridgeToCanonize(dataset)
         do {
-            return try RDFCanonize.canonicalize(quads: bridged)
+            return try RDFCanonize.canonicalize(
+                quads: bridged,
+                workFactor: options.canonicalizationWorkFactor
+            )
         } catch {
             throw JSONLD.Error.other(
                 code: "canonicalize-failed",

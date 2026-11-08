@@ -16,8 +16,33 @@ extension JSONLD {
         _ input: JSON,
         options: Options = Options()
     ) async throws(JSONLD.Error) -> Dataset {
+        if let limit = options.maxNestingDepth {
+            try checkNestingDepth(input, limit: limit)
+        }
         let expanded = try await expand(input, options: options)
         return toRDF(expanded: expanded)
+    }
+
+    /// Throws when `input` nests arrays or objects deeper than `limit`.
+    /// Iterative, so the check itself cannot overflow the stack.
+    static func checkNestingDepth(_ input: JSON, limit: Int) throws(JSONLD.Error) {
+        var stack: [(JSON, Int)] = [(input, 1)]
+        while let (value, depth) = stack.popLast() {
+            switch value {
+            case .array(let items):
+                guard depth <= limit else { throw depthError(limit) }
+                for item in items { stack.append((item, depth + 1)) }
+            case .object(let map):
+                guard depth <= limit else { throw depthError(limit) }
+                for item in map.values { stack.append((item, depth + 1)) }
+            default:
+                break
+            }
+        }
+    }
+
+    private static func depthError(_ limit: Int) -> JSONLD.Error {
+        .other(code: "nesting too deep", message: "input nests arrays or objects deeper than \(limit) levels")
     }
 
     /// Convert an RDF dataset to a JSON-LD document.

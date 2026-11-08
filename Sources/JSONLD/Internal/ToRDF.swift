@@ -210,16 +210,18 @@ private struct QuadEmitter {
                 if datatype == JSONLD.Literal.xsdString { datatype = JSONLD.Literal.xsdInteger }
             }
         case .double(let d):
-            if datatype == JSONLD.Literal.xsdString { datatype = JSONLD.Literal.xsdDouble }
-            // Per [§10.4](https://www.w3.org/TR/json-ld11-api/#data-round-tripping):
-            // fractional doubles use canonical-double lexical form even
-            // when the declared type is xsd:integer; whole-number doubles
-            // declared as xsd:integer use the integer canonical mapping.
-            if datatype == JSONLD.Literal.xsdInteger,
-               d.truncatingRemainder(dividingBy: 1) == 0,
-               abs(d) < 1e21
-            {
-                value = String(Int64(d))
+            // [§8.6 Object to RDF](https://www.w3.org/TR/json-ld11-api/#object-to-rdf):
+            // a number with no fractional part and an absolute value
+            // below 10^21 is an xsd:integer unless the datatype says
+            // xsd:double — so `1.0` and `1` give the same literal, as in
+            // jsonld.js. Fractional or huge values use the canonical
+            // double form.
+            let integral = d.isFinite && d.truncatingRemainder(dividingBy: 1) == 0 && abs(d) < 1e21
+            if datatype == JSONLD.Literal.xsdString {
+                datatype = integral ? JSONLD.Literal.xsdInteger : JSONLD.Literal.xsdDouble
+            }
+            if datatype == JSONLD.Literal.xsdInteger, integral {
+                value = XSDNumber.integerLexical(d)
             } else {
                 value = XSDNumber.canonicalDouble(d)
             }

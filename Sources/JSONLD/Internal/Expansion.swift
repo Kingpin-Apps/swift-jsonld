@@ -216,7 +216,14 @@ extension JSONLD {
 
             guard let expandedKey, expandedKey.contains(":") || Keyword(rawValue: expandedKey) != nil else {
                 // Drop terms that don't resolve to a keyword or
-                // absolute IRI.
+                // absolute IRI — or, in safe mode, refuse to, so the
+                // caller never hashes a document with uncovered keys.
+                if options.safeMode {
+                    throw JSONLD.Error.other(
+                        code: "invalid property",
+                        message: "safe mode: key '\(key)' does not expand to a keyword or absolute IRI and would be dropped"
+                    )
+                }
                 continue
             }
 
